@@ -37,18 +37,18 @@ public class AuthController {
     }
 
     @GetMapping("/refresh-token")
-    public ResponseEntity<String> refreshToken(HttpServletRequest request) {
+    public ResponseEntity<Map<String, String>> refreshToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Refresh token required");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error.toString());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
 
         String refreshToken = authHeader.substring(7);
         String response = authService.refreshUserAccessToken(refreshToken);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("accessToken", response));
     }
 
     @GetMapping("/logout")
