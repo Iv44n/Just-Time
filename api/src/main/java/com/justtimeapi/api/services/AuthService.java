@@ -6,8 +6,10 @@ import com.justtimeapi.api.models.AppSession;
 import com.justtimeapi.api.models.AppUser;
 
 import com.justtimeapi.api.models.Token;
+import com.justtimeapi.api.repository.RoleRepository;
 import com.justtimeapi.api.repository.SessionRepository;
 import com.justtimeapi.api.repository.UserRepository;
+import com.justtimeapi.api.repository.UserRoleRepository;
 import com.justtimeapi.api.services.token.JwtService;
 import com.justtimeapi.api.utils.UserAdapter;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,8 @@ import java.util.UUID;
 public class AuthService {
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
@@ -55,8 +59,20 @@ public class AuthService {
     public AuthResponse createAccount(RegisterRequest request) {
         String pwdHashed = passwordEncoder.encode(request.password());
 
-        AppUser u = new AppUser(null, request.username(), request.email(), pwdHashed, null, null);
+        AppUser u = AppUser.builder()
+                .username(request.username())
+                .email(request.email())
+                .password(pwdHashed)
+                .build();
+
+        System.out.println(u.toString());
+
         AppUser savedUser = userRepository.createUser(u);
+
+        UUID roleId = roleRepository.findRoleIdByName(request.role().name())
+                .orElseThrow(() -> new BadCredentialsException("Role not found: " + request.role()));
+
+        userRoleRepository.assignRoleToUser(savedUser.getId(), roleId);
 
         AppSession session = sessionRepository.createSession(savedUser.getId());
 
