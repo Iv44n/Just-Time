@@ -5,6 +5,7 @@ import com.justtimeapi.api.repository.SessionRepository;
 import com.justtimeapi.api.repository.UserRepository;
 import com.justtimeapi.api.repository.UserRoleRepository;
 import com.justtimeapi.api.services.token.JwtService;
+import com.justtimeapi.api.utils.Constants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -39,13 +40,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         boolean existsInHeader = (authHeader != null && authHeader.startsWith("Bearer "));
         boolean existsInCookies = (cookies != null &&
                 Arrays.stream(cookies)
-                        .anyMatch(cookie -> cookie.getName().equals("accessToken")));
+                .anyMatch(cookie -> cookie.getName().equals(Constants.ACCESS_TOKEN)));
 
         if (existsInHeader) {
             return authHeader.substring(7);
         } else if (existsInCookies) {
             return Arrays.stream(cookies)
-                    .filter(cookie -> cookie.getName().equals("accessToken"))
+                    .filter(cookie -> cookie.getName().equals(Constants.ACCESS_TOKEN))
                     .findFirst()
                     .map(Cookie::getValue)
                     .orElse(null);
