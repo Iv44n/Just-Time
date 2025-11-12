@@ -65,8 +65,6 @@ public class AuthService {
                 .password(pwdHashed)
                 .build();
 
-        System.out.println(u.toString());
-
         AppUser savedUser = userRepository.createUser(u);
 
         UUID roleId = roleRepository.findRoleIdByName(request.role().name())

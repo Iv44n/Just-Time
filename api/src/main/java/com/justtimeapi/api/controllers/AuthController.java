@@ -87,17 +87,32 @@ public class AuthController {
     }
 
     @GetMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String refreshToken = authHeader.substring(7);
-            authService.logout(refreshToken);
+        if (cookies == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Refresh token not found");
         }
+
+        String refreshToken = Arrays.stream(cookies)
+                .filter(cookie -> Constants.REFRESH_TOKEN.equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Refresh token not found");
+        }
+
+        authService.logout(refreshToken);
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logged out successfully");
-        return ResponseEntity.ok(response.toString());
+        response.put("status", "success");
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")

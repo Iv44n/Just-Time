@@ -7,6 +7,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -17,28 +18,26 @@ import java.util.UUID;
 public class UserRepository {
     private final JdbcTemplate jdbc;
 
+    private final RowMapper<AppUser> mapper = (rs, rowNum) -> {
+      return AppUser.builder()
+              .id(UUID.fromString(rs.getString("id")))
+              .username(rs.getString("username"))
+              .email(rs.getString("email"))
+              .password(rs.getString("password"))
+              .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+              .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
+              .build();
+    };
+
     public AppUser createUser(AppUser user) {
         try {
             String sql = """
-                    INSERT INTO app_users (id, username, email, password)
+                    INSERT INTO app_users (username, email, password)
                     VALUES (?, ?, ?, ?)
                     RETURNING id, username, email, password, created_at, updated_at
                     """;
 
-            UUID userId = UUID.randomUUID();
-
-            return jdbc.queryForObject(sql,
-                    (rs, rowNum) -> new AppUser(
-                            UUID.fromString(rs.getString("id")),
-                            rs.getString("username"),
-                            rs.getString("email"),
-                            rs.getString("password"),
-                            rs.getTimestamp("created_at").toLocalDateTime(),
-                            rs.getTimestamp("updated_at").toLocalDateTime()),
-                    userId,
-                    user.getUsername(),
-                    user.getEmail(),
-                    user.getPassword());
+            return jdbc.queryForObject(sql, mapper, user.getUsername(), user.getEmail(), user.getPassword());
         } catch (DuplicateKeyException e) {
             Throwable root = e.getMostSpecificCause();
 
@@ -66,15 +65,7 @@ public class UserRepository {
                     WHERE email = ?
                     """;
 
-            return jdbc.query(sql,
-                    (rs, rowNum) -> new AppUser(
-                            UUID.fromString(rs.getString("id")),
-                            rs.getString("username"),
-                            rs.getString("email"),
-                            rs.getString("password"),
-                            rs.getTimestamp("created_at").toLocalDateTime(),
-                            rs.getTimestamp("updated_at").toLocalDateTime()),
-                    email).stream().findFirst();
+            return jdbc.query(sql, mapper, email).stream().findFirst();
         } catch (Exception e) {
             throw new RuntimeException("Error finding user by email", e);
         }
@@ -88,15 +79,7 @@ public class UserRepository {
                     WHERE id = ?
                     """;
 
-            return jdbc.query(sql,
-                    (rs, rowNum) -> new AppUser(
-                            UUID.fromString(rs.getString("id")),
-                            rs.getString("username"),
-                            rs.getString("email"),
-                            rs.getString("password"),
-                            rs.getTimestamp("created_at").toLocalDateTime(),
-                            rs.getTimestamp("updated_at").toLocalDateTime()),
-                    userId).stream().findFirst();
+            return jdbc.query(sql, mapper, userId).stream().findFirst();
         } catch (Exception e) {
             throw new RuntimeException("Error finding user by id", e);
         }

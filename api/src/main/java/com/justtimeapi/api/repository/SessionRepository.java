@@ -18,12 +18,10 @@ public class SessionRepository {
     public AppSession createSession(UUID userId) {
         try {
             String sql = """
-                    INSERT INTO app_sessions (id, user_id, expires_at)
-                    VALUES (?, ?, ?)
+                    INSERT INTO app_sessions (user_id, expires_at)
+                    VALUES (?, ?)
                     RETURNING id, user_id, created_at, expires_at
                     """;
-
-            UUID sessionId = UUID.randomUUID();
 
             return jdbc.queryForObject(sql,
                     (rs, rowNum) -> new AppSession(
@@ -31,7 +29,6 @@ public class SessionRepository {
                             UUID.fromString(rs.getString("user_id")),
                             rs.getTimestamp("created_at").toLocalDateTime(),
                             rs.getTimestamp("expires_at").toLocalDateTime()),
-                    sessionId,
                     userId,
                     java.time.LocalDateTime.now().plusDays(30));
 
