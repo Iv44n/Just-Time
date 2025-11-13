@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,11 +30,16 @@ public class UserRepository {
               .build();
     };
 
+    public List<AppUser> getAllUsers() {
+        String sql = "SELECT * FROM app_users";
+        return jdbc.query(sql, mapper);
+    }
+
     public AppUser createUser(AppUser user) {
         try {
             String sql = """
                     INSERT INTO app_users (username, email, password)
-                    VALUES (?, ?, ?, ?)
+                    VALUES (?, ?, ?)
                     RETURNING id, username, email, password, created_at, updated_at
                     """;
 
