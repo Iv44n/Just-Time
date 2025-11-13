@@ -1,16 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Just Time - Client
+
+## Project Summary
+This is the client-side application for the "Just Time" project, built with Next.js. It provides a user interface for managing time-related tasks and data, interacting with a backend API.
+
+## Requirements
+
+- [Bun](https://bun.sh/)
 
 ## Getting Started
 
-First, run the development server:
+First, install the project dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
+```
+
+Then, run the development server:
+
+```bash
 bun dev
 ```
 
