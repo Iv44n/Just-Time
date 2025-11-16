@@ -1,5 +1,6 @@
 package com.justtimeapi.api.models;
 
+import com.justtimeapi.api.enums.ResourceType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

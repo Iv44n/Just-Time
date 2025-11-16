@@ -1,6 +1,6 @@
 package com.justtimeapi.api.repository;
 
-import com.justtimeapi.api.exceptions.UserAlreadyExistsException;
+import com.justtimeapi.api.exception.exceptions.UserAlreadyExistsException;
 import com.justtimeapi.api.models.AppUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;

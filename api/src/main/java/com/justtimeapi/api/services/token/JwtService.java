@@ -1,7 +1,7 @@
 package com.justtimeapi.api.services.token;
 
+import com.justtimeapi.api.enums.Token;
 import com.justtimeapi.api.interfaces.TokenGeneratorI;
-import com.justtimeapi.api.models.Token;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

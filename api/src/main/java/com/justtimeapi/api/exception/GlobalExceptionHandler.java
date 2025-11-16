@@ -1,5 +1,6 @@
-package com.justtimeapi.api.exceptions;
+package com.justtimeapi.api.exception;
 
+import com.justtimeapi.api.exception.exceptions.UserAlreadyExistsException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,12 +10,24 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<?> handleNotFound(NoHandlerFoundException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "error", "Route not found",
+                        "message", "The requested endpoint does not exist",
+                        "path", ex.getRequestURL()
+                ));
+    }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateKeyException(UserAlreadyExistsException exception) {

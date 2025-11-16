@@ -2,10 +2,10 @@ package com.justtimeapi.api.services;
 
 import com.justtimeapi.api.dto.request.LoginRequest;
 import com.justtimeapi.api.dto.response.AuthResponse;
+import com.justtimeapi.api.enums.Token;
 import com.justtimeapi.api.models.AppSession;
 import com.justtimeapi.api.models.AppUser;
 
-import com.justtimeapi.api.models.Token;
 import com.justtimeapi.api.repository.RoleRepository;
 import com.justtimeapi.api.repository.SessionRepository;
 import com.justtimeapi.api.repository.UserRepository;

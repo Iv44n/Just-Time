@@ -1,8 +1,8 @@
 package com.justtimeapi.api.repository;
 
 import com.justtimeapi.api.dto.request.UpdateResourceRequest;
+import com.justtimeapi.api.enums.ResourceType;
 import com.justtimeapi.api.models.Resource;
-import com.justtimeapi.api.models.ResourceType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

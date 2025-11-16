@@ -1,7 +1,7 @@
 package com.justtimeapi.api.dto.request;
 
 
-import com.justtimeapi.api.models.ResourceType;
+import com.justtimeapi.api.enums.ResourceType;
 
 public record UpdateResourceRequest(
         String name,

@@ -1,6 +1,6 @@
 package com.justtimeapi.api.dto.request;
 
-import com.justtimeapi.api.models.Roles;
+import com.justtimeapi.api.enums.Roles;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -16,9 +17,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("api/admin/resources")
+@RequestMapping("api/resources")
 @RequiredArgsConstructor
-public class AdminResourceController {
+public class ResourceController {
     private final ResourceService resourceService;
 
     @GetMapping()
@@ -33,6 +34,7 @@ public class AdminResourceController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping()
     public ResponseEntity<?> createResource(@Valid @RequestBody CreateResourceRequest request){
         Resource resource = resourceService.createResource(request);
@@ -45,6 +47,7 @@ public class AdminResourceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping()
     public ResponseEntity<?> deleteResource(@RequestParam UUID id) {
         Optional<UUID> deletedResourceId = resourceService.deleteResourceById(id);
@@ -63,6 +66,7 @@ public class AdminResourceController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping()
     public ResponseEntity<?> updateResource(@RequestParam UUID id, @Valid @RequestBody UpdateResourceRequest request) {
         Resource updated = resourceService.updateResourceById(id, request);

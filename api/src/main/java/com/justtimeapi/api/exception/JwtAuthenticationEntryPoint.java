@@ -1,8 +1,9 @@
-package com.justtimeapi.api.exceptions;
+package com.justtimeapi.api.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,28 +28,30 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
+        Map<String, Object> body = new HashMap<>();
+
         if (authException instanceof BadCredentialsException){
-            final Map<String, Object> body = new HashMap<>();
             body.put("errorCode", "InvalidCredentials");
             body.put("message", "Invalid Credentials");
 
             final ObjectMapper mapper = new ObjectMapper();
             mapper.writeValue(response.getOutputStream(), body);
+            return;
         }
 
-        final Map<String, Object> body = new HashMap<>();
-        body.put("errorCode", "InvalidAccessToken");
-        body.put("message", resolveMessage(authException));
+        String jwtError = (String) request.getAttribute("jwtError");
 
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(response.getOutputStream(), body);
-    }
+        if (jwtError != null) {
+            body.put("errorCode", "InvalidAccessToken");
+            body.put("message", jwtError);
 
-    private String resolveMessage(AuthenticationException ex) {
-        String msg = ex.getMessage().toLowerCase();
-        if (msg.contains("expired")) return "Access token has expired";
-        if (msg.contains("missing")) return "Access token is missing";
-        if (msg.contains("invalid")) return "Access token is invalid";
-        return "Unauthorized access";
+            new ObjectMapper().writeValue(response.getOutputStream(), body);
+            return;
+        }
+
+        body.put("errorCode", "Unauthorized");
+        body.put("message", authException.getMessage());
+
+        new ObjectMapper().writeValue(response.getOutputStream(), body);
     }
 }

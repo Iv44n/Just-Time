@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -40,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         boolean existsInHeader = (authHeader != null && authHeader.startsWith("Bearer "));
         boolean existsInCookies = (cookies != null &&
                 Arrays.stream(cookies)
-                .anyMatch(cookie -> cookie.getName().equals(Constants.ACCESS_TOKEN)));
+                        .anyMatch(cookie -> cookie.getName().equals(Constants.ACCESS_TOKEN)));
 
         if (existsInHeader) {
             return authHeader.substring(7);
@@ -62,41 +63,47 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String jwt = getJwtFromRequest(request);
 
         if (jwt == null) {
+            request.setAttribute("jwtError", "JWT is missing");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!jwtService.isTokenValid(jwt) || !jwtService.isAccessToken(jwt)) {
+            request.setAttribute("jwtError", "Invalid JWT");
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            if (jwtService.isTokenValid(jwt) && jwtService.isAccessToken(jwt)) {
-                UUID userId = jwtService.extractUserId(jwt);
-                UUID sessionId = jwtService.extractSessionId(jwt);
+            UUID userId = jwtService.extractUserId(jwt);
+            UUID sessionId = jwtService.extractSessionId(jwt);
 
-                if (userId != null && sessionId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    var userOpt = userRepository.findUserById(userId);
-                    var sessionOpt = sessionRepository.findSessionById(sessionId);
+            if (userId != null && sessionId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                var userOpt = userRepository.findUserById(userId);
+                var sessionOpt = sessionRepository.findSessionById(sessionId);
 
-                    if (userOpt.isPresent() && sessionOpt.isPresent()) {
-                        AppUser user = userOpt.get();
+                if (userOpt.isPresent() && sessionOpt.isPresent()) {
+                    AppUser user = userOpt.get();
 
-                        var roles = userRoleRepository.findRolesByUserId(user.getId());
+                    var roles = userRoleRepository.findRolesByUserId(user.getId());
 
-                        var authorities = roles.stream()
-                                .map(org.springframework.security.core.authority.SimpleGrantedAuthority::new)
-                                .toList();
+                    var authorities = roles.stream()
+                            .map(SimpleGrantedAuthority::new)
+                            .toList();
 
-                        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-                                .username(user.getEmail())
-                                .password(user.getPassword())
-                                .authorities(authorities)
-                                .build();
+                    UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                            .username(user.getEmail())
+                            .password(user.getPassword())
+                            .authorities(authorities)
+                            .build();
 
-                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities());
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    }
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
+
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
         } catch (Exception e) {

@@ -1,6 +1,5 @@
 package com.justtimeapi.api.dto.request;
 
-import com.justtimeapi.api.models.ResourceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
