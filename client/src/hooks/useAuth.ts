@@ -1,6 +1,6 @@
-import { useAppSelector } from './useBaseRedux'
+import { useAuthStore } from '@/store/useAuthStore'
 
 export function useAuth() {
-  const auth = useAppSelector(state => state.auth)
+  const auth = useAuthStore(state => state)
   return auth
 }

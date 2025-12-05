@@ -3,24 +3,16 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { authLogin, clearError } from '@/store/slices/authSlice'
 import { useState } from 'react'
-import { useAppDispatch, useAppSelector } from '@/hooks/useBaseRedux'
+import useEmailSignIn from '@/hooks/useEmailSignIn'
 
 export default function LoginForm() {
-  const dispatch = useAppDispatch()
-  const { isLoading, error } = useAppSelector(state => state.auth)
+  const { handleEmailSignIn, status } = useEmailSignIn()
   const [formData, setFormData] = useState({ email: '', password: '' })
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    dispatch(clearError())
-
-    try {
-      await dispatch(authLogin(formData))
-    } catch (error) {
-      console.error(error)
-    }
+    await handleEmailSignIn(formData)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,9 +46,11 @@ export default function LoginForm() {
           onChange={handleChange}
         />
       </div>
-      {error && <p className='text-red-500 text-sm'>{error}</p>}
-      <Button type='submit' className='w-full' aria-disabled={isLoading}>
-        {isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
+      {status.errorMessage && (
+        <p className='text-red-500 text-sm'>{status.errorMessage}</p>
+      )}
+      <Button type='submit' className='w-full' aria-disabled={status.loading}>
+        {status.loading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
       </Button>
     </form>
   )

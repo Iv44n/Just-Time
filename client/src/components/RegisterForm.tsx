@@ -3,13 +3,11 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAppDispatch, useAppSelector } from '@/hooks/useBaseRedux'
-import { authRegister, clearError } from '@/store/slices/authSlice'
 import { useState } from 'react'
+import useEmailSignUp from '@/hooks/useEmailSignUp'
 
 export default function RegisterForm() {
-  const { error, isLoading } = useAppSelector(state => state.auth)
-  const dispatch = useAppDispatch()
+  const { handleEmailSignUp, status } = useEmailSignUp()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,20 +17,15 @@ export default function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    dispatch(clearError())
 
     const { name, role, ...rest } = formData
 
     if (role !== 'ROLE_USER' && role !== 'ROLE_ADMIN') {
-      console.error('Invalid role selected')
+      alert('Rol inválido')
       return
     }
 
-    try {
-      await dispatch(authRegister({ username: name, role, ...rest }))
-    } catch (error) {
-      console.error(error)
-    }
+    await handleEmailSignUp({ username: name, role, ...rest })
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,9 +86,11 @@ export default function RegisterForm() {
           <option value='ROLE_ADMIN'>Administrador</option>
         </select>
       </div>
-      {error && <p className='text-red-500 text-sm'>{error}</p>}
-      <Button type='submit' className='w-full' aria-disabled={isLoading}>
-        {isLoading ? 'Registrando usuario' : 'Registrar'}
+      {status.errorMessage && (
+        <p className='text-red-500 text-sm'>{status.errorMessage}</p>
+      )}
+      <Button type='submit' className='w-full' aria-disabled={status.loading}>
+        {status.loading ? 'Registrando usuario' : 'Registrar'}
       </Button>
     </form>
   )

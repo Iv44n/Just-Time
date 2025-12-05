@@ -1,16 +1,22 @@
 'use client'
 
+import { getCurrentUser } from '@/lib/api'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useEffect, useState } from 'react'
-import { fetchCurrentUser } from '@/store/slices/authSlice'
-import { useAppDispatch } from '@/hooks/useBaseRedux'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const dispatch = useAppDispatch()
   const [isReady, setIsReady] = useState(false)
+  const setUser = useAuthStore(state => state.setUser)
 
   useEffect(() => {
-    dispatch(fetchCurrentUser()).finally(() => setIsReady(true))
-  }, [dispatch])
+    getCurrentUser()
+      .then(user => {
+        setUser(user)
+      })
+      .finally(() => {
+        setIsReady(true)
+      })
+  }, [setUser])
 
   if (!isReady) return null
 
