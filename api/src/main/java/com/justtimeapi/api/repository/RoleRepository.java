@@ -14,12 +14,10 @@ public class RoleRepository {
 
     public Optional<UUID> findRoleIdByName(String roleName){
         String sql = "SELECT id FROM app_roles WHERE name = ?";
-
-        try {
-            UUID id = jdbc.queryForObject(sql, UUID.class, roleName);
-            return Optional.ofNullable(id);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return jdbc.query(
+                sql,
+                (rs ,rowNum) -> UUID.fromString(rs.getString("id")),
+                roleName
+        ).stream().findFirst();
     }
 }

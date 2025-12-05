@@ -29,7 +29,7 @@ public class ApiKeyRepository {
               .build();
     };
 
-    public void save(ApiKey apiKey){
+    public ApiKey save(ApiKey apiKey){
         String sql = """
             INSERT INTO api_keys (user_id, resource_id, key_prefix, key_hash, expires_at)
             VALUES (?, ?, ?, ?, ?)
@@ -37,7 +37,7 @@ public class ApiKeyRepository {
             RETURNING *;
         """;
 
-        jdbc.queryForObject(sql, mapper,
+        return jdbc.queryForObject(sql, mapper,
                 apiKey.getUserId(),
                 apiKey.getResourceId(),
                 apiKey.getKeyPrefix(),
@@ -48,6 +48,11 @@ public class ApiKeyRepository {
 
     public Optional<ApiKey> findByIdAndUserId(UUID keyId, UUID userId){
         String sql = "SELECT * FROM api_keys WHERE id = ? AND user_id = ?";
-        return Optional.ofNullable(jdbc.queryForObject(sql, mapper, keyId, userId));
+        return jdbc.query(sql, mapper, keyId, userId).stream().findFirst();
+    }
+
+    public Optional<ApiKey> findByResourceIdAndUserId(UUID resourceId, UUID userId) {
+        String sql = "SELECT * FROM api_keys WHERE resource_id = ? AND user_id = ?";
+        return jdbc.query(sql, mapper, resourceId, userId).stream().findFirst();
     }
 }

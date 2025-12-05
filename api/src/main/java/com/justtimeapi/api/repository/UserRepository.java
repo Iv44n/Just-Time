@@ -1,5 +1,6 @@
 package com.justtimeapi.api.repository;
 
+import com.justtimeapi.api.enums.Roles;
 import com.justtimeapi.api.exception.exceptions.UserAlreadyExistsException;
 import com.justtimeapi.api.models.AppUser;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +21,27 @@ public class UserRepository {
     private final JdbcTemplate jdbc;
 
     private final RowMapper<AppUser> mapper = (rs, rowNum) -> {
-      return AppUser.builder()
-              .id(UUID.fromString(rs.getString("id")))
-              .username(rs.getString("username"))
-              .email(rs.getString("email"))
-              .password(rs.getString("password"))
-              .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
-              .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
-              .build();
+        return AppUser.builder()
+                .id(UUID.fromString(rs.getString("id")))
+                .username(rs.getString("username"))
+                .email(rs.getString("email"))
+                .password(rs.getString("password"))
+                .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
+                .roles(getUserRolesByUserId(UUID.fromString(rs.getString("id"))))
+                .build();
     };
+
+    private List<Roles> getUserRolesByUserId(UUID userId) {
+        String sql = """
+                SELECT r.name
+                FROM app_user_roles ur
+                LEFT JOIN app_roles r ON ur.role_id = r.id
+                WHERE ur.user_id = ?
+                """;
+
+        return jdbc.query(sql, (rs, rowNum) -> Roles.valueOf(rs.getString("name")), userId);
+    }
 
     public List<AppUser> getAllUsers() {
         String sql = "SELECT * FROM app_users";
@@ -64,30 +77,21 @@ public class UserRepository {
     }
 
     public Optional<AppUser> findUserByEmail(String email) {
-        try {
-            String sql = """
-                    SELECT id, username, email, password, created_at, updated_at
-                    FROM app_users
-                    WHERE email = ?
-                    """;
-
-            return jdbc.query(sql, mapper, email).stream().findFirst();
-        } catch (Exception e) {
-            throw new RuntimeException("Error finding user by email", e);
-        }
+        String sql = """
+                SELECT id, username, email, password, created_at, updated_at
+                FROM app_users
+                WHERE email = ?
+                """;
+        return jdbc.query(sql, mapper, email).stream().findFirst();
     }
 
     public Optional<AppUser> findUserById(UUID userId) {
-        try {
-            String sql = """
-                    SELECT id, username, email, password, created_at, updated_at
-                    FROM app_users
-                    WHERE id = ?
-                    """;
+        String sql = """
+                SELECT id, username, email, password, created_at, updated_at
+                FROM app_users
+                WHERE id = ?
+                """;
 
-            return jdbc.query(sql, mapper, userId).stream().findFirst();
-        } catch (Exception e) {
-            throw new RuntimeException("Error finding user by id", e);
-        }
+        return jdbc.query(sql, mapper, userId).stream().findFirst();
     }
 }

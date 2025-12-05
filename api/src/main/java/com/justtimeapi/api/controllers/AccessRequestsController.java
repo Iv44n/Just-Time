@@ -35,13 +35,17 @@ public class AccessRequestsController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("all")
+    @GetMapping
     public ResponseEntity<?> getAllRequests(){ return ResponseEntity.ok(accessRequestsService.getAllRequests()); }
+
+    @GetMapping("user/{userId}")
+    public ResponseEntity<?> getRequestsByUserId(@PathVariable UUID userId) {
+        return ResponseEntity.ok(accessRequestsService.getRequestsByUserId(userId));
+    }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("{id}/approve")
     public ResponseEntity<?> approve(@PathVariable UUID id, @RequestParam UUID adminId) {
-        System.out.println(id.toString() + adminId.toString());
         Map<String, Object> body = accessRequestsService.approve(id, adminId);
         body.put("status", HttpStatus.OK.value());
         body.put("message", "Request approved");

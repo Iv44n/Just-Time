@@ -25,7 +25,8 @@ public class AccessRequestRepository {
                 .resourceId(UUID.fromString(rs.getString("resource_id")))
                 .reason(rs.getString("reason"))
                 .status(AccessRequestStatus.valueOf(rs.getString("status")))
-                .requestAt(rs.getTimestamp("request_at").toLocalDateTime())
+                .requestedHours(rs.getInt("requested_hours"))
+                .requestAt(rs.getTimestamp("requested_at").toLocalDateTime())
                 .reviewedAt(rs.getTimestamp("reviewed_at") != null ? rs.getTimestamp("reviewed_at").toLocalDateTime() : null)
                 .reviewedBy(rs.getString("reviewed_by") != null ? UUID.fromString(rs.getString("reviewed_by")) : null)
                 .build();
@@ -48,7 +49,17 @@ public class AccessRequestRepository {
     }
 
     public List<AccessRequest> findAll() {
-        return jdbc.query("SELECT * FROM access_requests ORDER BY request_at DESC", mapper);
+        return jdbc.query("SELECT * FROM access_requests ORDER BY requested_at DESC", mapper);
+    }
+
+    public List<AccessRequest> findByUserId(UUID userId) {
+        String sql = """
+                SELECT * FROM access_requests
+                WHERE user_id = ?
+                ORDER BY requested_at DESC
+                """;
+
+        return jdbc.query(sql, mapper, userId);
     }
 
     public Optional<AccessRequest> findById(UUID id) {

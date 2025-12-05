@@ -1,0 +1,38 @@
+@startuml
+' skinparam to make it look a bit better
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+hide empty members
+
+title Adapter and Factory Pattern in Resource Creation
+
+interface ResourceDetailsAdapter {
+  + toResourceDbDetails(resourceId: UUID): ResourceDbDetails
+}
+
+class ConnectionUrlAdapter implements ResourceDetailsAdapter {
+  - connectionUrl: String
+  + toResourceDbDetails(resourceId: UUID): ResourceDbDetails
+}
+
+class DetailedAdapter implements ResourceDetailsAdapter {
+  - details: CreateResourceRequest.Details
+  + toResourceDbDetails(resourceId: UUID): ResourceDbDetails
+}
+
+class ResourceDetailsAdapterFactory {
+  + {static} create(details: CreateResourceRequest.Details): ResourceDetailsAdapter
+}
+
+note right of ResourceDetailsAdapterFactory::create
+  if details.connectionUrl is not null
+    return new ConnectionUrlAdapter()
+  else
+    return new DetailedAdapter()
+end note
+
+ResourceDetailsAdapterFactory ..> ConnectionUrlAdapter : creates
+ResourceDetailsAdapterFactory ..> DetailedAdapter : creates
+ResourceDetailsAdapterFactory ..> ResourceDetailsAdapter : returns
+
+@enduml

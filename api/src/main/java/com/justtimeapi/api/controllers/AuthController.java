@@ -3,17 +3,24 @@ package com.justtimeapi.api.controllers;
 import com.justtimeapi.api.dto.request.LoginRequest;
 import com.justtimeapi.api.dto.request.RegisterRequest;
 import com.justtimeapi.api.dto.response.AuthResponse;
+import com.justtimeapi.api.exception.ApiError;
+import com.justtimeapi.api.exception.exceptions.UserNotFoundException;
 import com.justtimeapi.api.models.AppUser;
 
 import com.justtimeapi.api.utils.Constants;
 import com.justtimeapi.api.utils.CookieFactory;
+import com.justtimeapi.api.utils.UserAdapter;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import com.justtimeapi.api.services.AuthService;
@@ -29,6 +36,10 @@ import java.util.Optional;
 public class AuthController {
     private final AuthService authService;
     private final CookieFactory cookieFactory;
+
+    AuthService getAuthService() {
+        return authService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
@@ -57,23 +68,15 @@ public class AuthController {
     }
 
     @GetMapping("/refresh")
-    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-
-        if (cookies == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Refresh token not found");
-        }
-
-        String refreshToken = Arrays.stream(cookies)
-                .filter(cookie -> Constants.REFRESH_TOKEN.equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
-
+    public ResponseEntity<?> refreshToken(@CookieValue(name = Constants.REFRESH_TOKEN, required = false) String refreshToken) {
         if (refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Refresh token not found");
+            ApiError error = ApiError.builder()
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .message("Refresh token not found")
+                    .errorCode("REFRESH_TOKEN_MISSING")
+                    .details(null)
+                    .build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
 
         String newAccessToken = authService.refreshUserAccessToken(refreshToken);
@@ -87,37 +90,25 @@ public class AuthController {
     }
 
     @GetMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-
-        if (cookies == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Refresh token not found");
-        }
-
-        String refreshToken = Arrays.stream(cookies)
-                .filter(cookie -> Constants.REFRESH_TOKEN.equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
-
-        if (refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Refresh token not found");
-        }
-
-        authService.logout(refreshToken);
+    public ResponseEntity<?> logout(Authentication authentication) {
+        authService.logout(authentication.getCredentials().toString());
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logged out successfully");
         response.put("status", "success");
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .headers(h -> {
+                    cookieFactory.clearAuthCookies()
+                            .forEach(cookie -> h.add(HttpHeaders.SET_COOKIE, cookie.toString()));
+                })
+                .body(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@RequestParam String email) {
-        Optional<AppUser> response = authService.getCurrentAppUser(email);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        AppUser response = authService.getCurrentAppUserByCookie(authentication.getCredentials().toString());
+        return ResponseEntity.ok(UserAdapter.toResponse(response));
     }
 }

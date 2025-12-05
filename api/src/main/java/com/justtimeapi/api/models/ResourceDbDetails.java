@@ -10,12 +10,15 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @Builder
-public class Resource {
-    private UUID id;
-    private String name;
-    private ResourceType type;
-    private String status;
-    private UUID createdBy;
+public class ResourceDbDetails {
+    private UUID resourceId;
+    private String engine;
+    private String host;
+    private Integer port;
+    private String databaseName;
+    private String username;
+    private String encryptedPassword;
+    private String params; // rest url
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

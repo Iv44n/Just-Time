@@ -26,7 +26,8 @@ public class JustTimeApiApplication {
                         .allowedOrigins(clientOrigin)
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*")
-                        .allowCredentials(true);
+                        .allowCredentials(true)
+                        .exposedHeaders("Set-Cookie");;
             }
         };
     }

@@ -10,6 +10,7 @@ public class UserAdapter {
                 user.getUsername(),
                 user.getEmail(),
                 user.getCreatedAt(),
-                user.getUpdatedAt());
+                user.getUpdatedAt(),
+                user.getRoles());
     }
 }

@@ -1,6 +1,7 @@
 package com.justtimeapi.api.security;
 
 import com.justtimeapi.api.models.AppUser;
+import com.justtimeapi.api.models.UserPrincipal;
 import com.justtimeapi.api.repository.SessionRepository;
 import com.justtimeapi.api.repository.UserRepository;
 import com.justtimeapi.api.repository.UserRoleRepository;
@@ -63,13 +64,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String jwt = getJwtFromRequest(request);
 
         if (jwt == null) {
-            request.setAttribute("jwtError", "JWT is missing");
+            request.setAttribute("jwtError", "Access token not found");
             filterChain.doFilter(request, response);
             return;
         }
 
         if (!jwtService.isTokenValid(jwt) || !jwtService.isAccessToken(jwt)) {
-            request.setAttribute("jwtError", "Invalid JWT");
+            request.setAttribute("jwtError", "Invalid access token");
             filterChain.doFilter(request, response);
             return;
         }
@@ -91,15 +92,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             .map(SimpleGrantedAuthority::new)
                             .toList();
 
-                    UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-                            .username(user.getEmail())
-                            .password(user.getPassword())
-                            .authorities(authorities)
-                            .build();
+                    UserPrincipal userDetails = new UserPrincipal(user, authorities);
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
-                            null,
+                            jwt,
                             userDetails.getAuthorities());
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

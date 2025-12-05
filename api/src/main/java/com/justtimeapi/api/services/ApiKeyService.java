@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,16 +23,27 @@ public class ApiKeyService {
     private final ApiKeyRepository apiKeyRepository;
     private final TemporaryKeyStorageStrategy keyStorageStrategy;
 
-    public void saveApiKey(ApiKey apiKey){
-        apiKeyRepository.save(apiKey);
+    public ApiKey saveApiKey(ApiKey apiKey){
+        return apiKeyRepository.save(apiKey);
     }
+    public void saveApiKeyInStorageKey(UUID apiKeyId, String rawKey){keyStorageStrategy.save(apiKeyId, rawKey);}
 
-    public Optional<ApiKey> getByIdAndUserId(UUID keyId, UUID userId){
-        return apiKeyRepository.findByIdAndUserId(keyId, userId);
-    }
+    public Map<String, Object> revealKey(UUID resourceId, UUID userId){
+        ApiKey apiKey = apiKeyRepository.findByResourceIdAndUserId(resourceId, userId)
+                .orElseThrow(() -> new RuntimeException("API key not found"));
 
-    public String revealKey(UUID keyId){
-        return keyStorageStrategy.retrieve(keyId);
+        if (apiKey.isRevealed()) {
+            throw new IllegalStateException("API key has already been revealed");
+        }
+
+        String rawKey = keyStorageStrategy.retrieve(apiKey.getId());
+        apiKey.setRevealed(true);
+
+        return Map.of(
+                "apiKeyId", apiKey.getId(),
+                "userId",apiKey.getUserId(),
+                "apiKey", rawKey
+        );
     }
 
     public String generateTempKey(String keyPrefix) {
@@ -48,7 +61,7 @@ public class ApiKeyService {
         }
     }
 
-    public Instant generateExpiration(int durationHours) {
-        return Instant.now().plus(durationHours, ChronoUnit.HOURS);
+    public LocalDateTime generateExpiration(int durationHours) {
+        return LocalDateTime.now().plusHours(durationHours);
     }
 }

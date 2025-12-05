@@ -15,11 +15,7 @@ public class UserRoleRepository {
 
     public void assignRoleToUser(UUID userId, UUID roleId){
         String sql = "INSERT INTO app_user_roles (user_id, role_id) VALUES (?, ?)";
-        try {
-            jdbc.update(sql, userId, roleId);
-        } catch (Exception e) {
-            throw new RuntimeException("Error assigning role to user");
-        }
+        jdbc.update(sql, userId, roleId);
     }
 
     public List<String> findRolesByUserId(UUID userId) {
@@ -30,10 +26,6 @@ public class UserRoleRepository {
         WHERE ur.user_id = ?
         """;
 
-        try {
-            return jdbc.query(sql, (rs, rowNum) -> rs.getString("name"), userId);
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        }
+        return jdbc.query(sql, (rs, rowNum) -> rs.getString("name"), userId);
     }
 }

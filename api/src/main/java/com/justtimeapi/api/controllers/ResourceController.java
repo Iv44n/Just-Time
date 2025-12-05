@@ -3,12 +3,15 @@ package com.justtimeapi.api.controllers;
 import com.justtimeapi.api.dto.request.CreateResourceRequest;
 import com.justtimeapi.api.dto.request.UpdateResourceRequest;
 import com.justtimeapi.api.models.Resource;
+import com.justtimeapi.api.models.UserPrincipal;
 import com.justtimeapi.api.services.ResourceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -23,7 +26,25 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @GetMapping()
-    public ResponseEntity<?> resources(){
+    public ResponseEntity<?> resources(
+            @RequestParam(required = false) String status,
+            Authentication authentication
+    ){
+        boolean isAdmin = authentication.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        var userPrincipal = ((UserPrincipal) authentication.getPrincipal());
+
+        if (!isAdmin) {
+
+            return ResponseEntity.ok(resourceService.getResourcesForUser(userPrincipal.getId()));
+        }
+
+        if (status != null && !status.isBlank()) {
+            System.out.println("Falta función por status: " + status);
+        }
+
         return ResponseEntity.ok(resourceService.getAllResources());
     }
 

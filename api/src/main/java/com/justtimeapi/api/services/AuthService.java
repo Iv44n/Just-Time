@@ -3,6 +3,10 @@ package com.justtimeapi.api.services;
 import com.justtimeapi.api.dto.request.LoginRequest;
 import com.justtimeapi.api.dto.response.AuthResponse;
 import com.justtimeapi.api.enums.Token;
+import com.justtimeapi.api.exception.exceptions.InvalidRefreshTokenException;
+import com.justtimeapi.api.exception.exceptions.RoleNotFoundException;
+import com.justtimeapi.api.exception.exceptions.SessionNotFoundException;
+import com.justtimeapi.api.exception.exceptions.UserNotFoundException;
 import com.justtimeapi.api.models.AppSession;
 import com.justtimeapi.api.models.AppUser;
 
@@ -18,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.justtimeapi.api.dto.request.RegisterRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -33,16 +38,11 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public AuthResponse loginUser(LoginRequest request) {
-        Optional<AppUser> userOpt = userRepository.findUserByEmail(request.email());
-
-        if (userOpt.isEmpty()) {
-            throw new BadCredentialsException("Invalid credentials");
-        }
-
-        AppUser user = userOpt.get();
+        AppUser user = userRepository.findUserByEmail(request.email())
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         AppSession session = sessionRepository.createSession(user.getId());
@@ -56,6 +56,7 @@ public class AuthService {
                 UserAdapter.toResponse(user));
     }
 
+    @Transactional
     public AuthResponse createAccount(RegisterRequest request) {
         String pwdHashed = passwordEncoder.encode(request.password());
 
@@ -68,7 +69,7 @@ public class AuthService {
         AppUser savedUser = userRepository.createUser(u);
 
         UUID roleId = roleRepository.findRoleIdByName(request.role().name())
-                .orElseThrow(() -> new BadCredentialsException("Role not found: " + request.role()));
+                .orElseThrow(() -> new RoleNotFoundException("Role not found: " + request.role().name()));
 
         userRoleRepository.assignRoleToUser(savedUser.getId(), roleId);
 
@@ -85,26 +86,16 @@ public class AuthService {
 
     public String refreshUserAccessToken(String refreshToken) {
         if (!jwtService.isTokenValid(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
-            throw new BadCredentialsException("Invalid refresh token");
+            throw new InvalidRefreshTokenException("Invalid refresh token");
         }
 
         UUID sessionId = jwtService.extractSessionId(refreshToken);
 
-        Optional<AppSession> sessionOpt = sessionRepository.findSessionById(sessionId);
+        AppSession session = sessionRepository.findSessionById(sessionId)
+                .orElseThrow(() -> new SessionNotFoundException("Session not found or expired"));
 
-        if (sessionOpt.isEmpty()) {
-            throw new BadCredentialsException("Session not found or expired");
-        }
-
-        AppSession session = sessionOpt.get();
-
-        Optional<AppUser> userOpt = userRepository.findUserById(session.getUserId());
-
-        if (userOpt.isEmpty()) {
-            throw new BadCredentialsException("User not found");
-        }
-
-        AppUser user = userOpt.get();
+        AppUser user = userRepository.findUserById(session.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         return jwtService.generateToken(Token.ACCESS_TOKEN, session.getId(), user.getId());
     }
@@ -113,13 +104,16 @@ public class AuthService {
         if (jwtService.isTokenValid(accessToken) || jwtService.isAccessToken(accessToken)) {
             UUID sessionId = jwtService.extractSessionId(accessToken);
 
-            if (sessionId != null) {
-                sessionRepository.deleteSessionById(sessionId);
+            if (sessionId == null) {
+                throw new SessionNotFoundException("Session not found for the provided token");
             }
+
+            sessionRepository.deleteSessionById(sessionId);
         }
     }
 
-    public Optional<AppUser> getCurrentAppUser(String email) {
-        return userRepository.findUserByEmail(email);
+    public AppUser getCurrentAppUserByCookie(String cookie) {
+        UUID userId = jwtService.extractUserId(cookie);
+        return userRepository.findUserById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }

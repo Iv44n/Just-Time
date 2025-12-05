@@ -2,7 +2,6 @@ package com.justtimeapi.api.repository;
 
 import com.justtimeapi.api.models.AppSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -39,31 +38,23 @@ public class SessionRepository {
     }
 
     public Optional<AppSession> findSessionById(UUID sessionId) {
-        try {
-            String sql = """
-                    SELECT id, user_id, created_at, expires_at
-                    FROM app_sessions
-                    WHERE id = ?
-                    """;
+        String sql = """
+                SELECT id, user_id, created_at, expires_at
+                FROM app_sessions
+                WHERE id = ?
+                """;
 
-            return jdbc.query(sql,
-                    (rs, rowNum) -> new AppSession(
-                            UUID.fromString(rs.getString("id")),
-                            UUID.fromString(rs.getString("user_id")),
-                            rs.getTimestamp("created_at").toLocalDateTime(),
-                            rs.getTimestamp("expires_at").toLocalDateTime()),
-                    sessionId).stream().findFirst();
-        } catch (Exception e) {
-            throw new RuntimeException("Error finding session by id", e);
-        }
+        return jdbc.query(sql,
+                (rs, rowNum) -> new AppSession(
+                        UUID.fromString(rs.getString("id")),
+                        UUID.fromString(rs.getString("user_id")),
+                        rs.getTimestamp("created_at").toLocalDateTime(),
+                        rs.getTimestamp("expires_at").toLocalDateTime()),
+                sessionId).stream().findFirst();
     }
 
     public void deleteSessionById(UUID sessionId) {
-        try {
-            String sql = "DELETE FROM app_sessions WHERE id = ?";
-            jdbc.update(sql, sessionId);
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        }
+        String sql = "DELETE FROM app_sessions WHERE id = ?";
+        jdbc.update(sql, sessionId);
     }
 }
