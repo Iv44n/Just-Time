@@ -5,6 +5,7 @@ import com.justtimeapi.api.adapters.resource.ResourceDetailsAdapterFactory;
 import com.justtimeapi.api.dto.request.*;
 import com.justtimeapi.api.dto.response.ResourceClientResponse;
 import com.justtimeapi.api.enums.Roles;
+import com.justtimeapi.api.interfaces.IResourceService;
 import com.justtimeapi.api.models.Resource;
 import com.justtimeapi.api.models.ResourceDbDetails;
 import com.justtimeapi.api.models.ResourceType;
@@ -21,7 +22,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class ResourceService {
+public class ResourceService implements IResourceService {
     private final ResourceRepository resourceRepository;
     private final ResourceTypeRepository resourceTypeRepository;
     private final ResourceDbDetailsRepository resourceDbDetailsRepository;

@@ -1,5 +1,8 @@
 package com.justtimeapi.api.security;
 
+import com.justtimeapi.api.interfaces.IResourceService;
+import com.justtimeapi.api.services.ResourceService;
+import com.justtimeapi.api.services.proxy.ResourceServiceProxy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,5 +24,13 @@ public class AppConfig {
     public PasswordEncoder passwordHash() {
         return new BCryptPasswordEncoder();
     }
+
+
+
+        @Bean
+        public IResourceService resourceServiceProxy(ResourceService resourceService) {
+            return new ResourceServiceProxy(resourceService);
+        }
+
 
 }
