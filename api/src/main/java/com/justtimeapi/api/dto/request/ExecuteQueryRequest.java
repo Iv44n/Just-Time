@@ -2,8 +2,11 @@ package com.justtimeapi.api.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record executeQueryRequest(
+import java.util.UUID;
+
+public record ExecuteQueryRequest(
         @NotBlank
-        String sql
+        String sql,
+        UUID accessRequestId
 ) {
 }

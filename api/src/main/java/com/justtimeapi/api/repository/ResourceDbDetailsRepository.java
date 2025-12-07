@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -50,5 +51,11 @@ public class ResourceDbDetailsRepository {
                 resourceDbDetails.getUsername(),
                 resourceDbDetails.getEncryptedPassword(),
                 resourceDbDetails.getParams());
+    }
+
+    public Optional<ResourceDbDetails> findByResourceId(UUID resourceId){
+        String sql = "SELECT * FROM resource_db_details WHERE resource_id = ?";
+
+        return jdbc.query(sql, mapper, resourceId).stream().findFirst();
     }
 }

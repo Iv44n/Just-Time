@@ -1,10 +1,12 @@
 package com.justtimeapi.api.controllers;
 
 import com.justtimeapi.api.dto.request.CreateResourceRequest;
+import com.justtimeapi.api.dto.request.ExecuteQueryRequest;
 import com.justtimeapi.api.dto.request.UpdateResourceRequest;
 import com.justtimeapi.api.models.Resource;
 import com.justtimeapi.api.models.UserPrincipal;
 import com.justtimeapi.api.services.ResourceService;
+import com.justtimeapi.api.utils.QueryProxy;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResourceController {
     private final ResourceService resourceService;
+    private final QueryProxy queryProxy;
 
     @GetMapping()
     public ResponseEntity<?> resources(
@@ -53,6 +56,11 @@ public class ResourceController {
         return resourceService.getResourceById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{resourceId}/query")
+    public ResponseEntity<?> executeQuery(@PathVariable UUID resourceId, @Valid @RequestBody ExecuteQueryRequest body) {
+        return ResponseEntity.ok(queryProxy.execute(body.accessRequestId(), resourceId, body.sql()));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
