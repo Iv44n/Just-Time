@@ -25,8 +25,6 @@ public class QueryExecutionService implements QueryExecute {
 
         String url = getUrlFromResourceDbDetails(resourceDbDetails);
         String driver = getDriverFromEngine(resourceDbDetails.getEngine());
-        System.out.println(url);
-        System.out.println(driver);
 
         DataSource ds = connectionManager.getDataSource(url, resourceDbDetails.getUsername(), resourceDbDetails.getEncryptedPassword(), driver, resourceId);
 

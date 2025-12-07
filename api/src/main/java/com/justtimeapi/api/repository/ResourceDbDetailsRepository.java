@@ -20,7 +20,7 @@ public class ResourceDbDetailsRepository {
                 .resourceId(UUID.fromString(rs.getString("resource_id")))
                 .engine(rs.getString("engine"))
                 .host(rs.getString("host"))
-                .port(rs.getInt("port"))
+                .port(rs.getObject("port", Integer.class))
                 .databaseName(rs.getString("db_name"))
                 .username(rs.getString("username"))
                 .encryptedPassword(rs.getString("encrypted_password"))
