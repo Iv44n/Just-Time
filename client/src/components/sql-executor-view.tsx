@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,30 +11,8 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import {
-  ArrowLeft,
-  Play,
-  Database,
-  Key,
-  Copy,
-  Check,
-  Terminal,
-  AlertCircle,
-  CheckCircle
-} from 'lucide-react'
-import { AccessRequest } from '@/types/accessRequest'
-
-interface DatabaseResource {
-  id: string
-  name: string
-  engine: string
-  host?: string
-  port?: number
-  database?: string
-  username?: string
-  connectionUrl?: string
-}
+import { ArrowLeft, Play, Database, Terminal, CheckCircle } from 'lucide-react'
+import { useAccessRequestById } from '@/hooks/accessRequests'
 
 interface SqlResult {
   columns: string[]
@@ -43,73 +21,21 @@ interface SqlResult {
   rowCount: number
 }
 
-export function SqlExecutorView({ resourceId }: { resourceId: string }) {
+export function SqlExecutorView({ requestId }: { requestId: string }) {
   const router = useRouter()
-  const [access, setAccess] = useState<AccessRequest | null>(null)
-  const [database, setDatabase] = useState<DatabaseResource | null>(null)
   const [sqlQuery, setSqlQuery] = useState('')
-  const [apiKeyInput, setApiKeyInput] = useState('')
   const [isExecuting, setIsExecuting] = useState(false)
   const [sqlResults, setSqlResults] = useState<SqlResult | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    if (!resourceId) return
-
-    const loadData = () => {
-      const requests = JSON.parse(
-        localStorage.getItem('gatekeeper_requests') || '[]'
-      )
-      const databases = JSON.parse(
-        localStorage.getItem('gatekeeper_databases') || '[]'
-      )
-
-      const foundAccess = requests.find(
-        (r: AccessRequest) => r.id === resourceId && r.status === 'APPROVED'
-      )
-
-      if (foundAccess) {
-        setAccess(foundAccess)
-        const foundDb = databases.find(
-          (d: DatabaseResource) => d.id === foundAccess.databaseId
-        )
-        setDatabase(foundDb || null)
-      }
-
-      setIsLoading(false)
-    }
-
-    loadData()
-  }, [resourceId])
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  const { accessRequest, isLoading } = useAccessRequestById(requestId)
 
   const executeSQL = () => {
-    if (!sqlQuery.trim() || !apiKeyInput || !access) return
-
-    // Validar API key
-    if (apiKeyInput !== access.apiKey) {
-      setError(
-        'API Key inválida. Verifica que estés usando la API Key correcta para esta base de datos.'
-      )
-      setSqlResults(null)
-      return
-    }
+    if (!sqlQuery.trim() || !accessRequest) return
 
     setIsExecuting(true)
-    setError(null)
 
-    // Simular ejecución SQL
     setTimeout(() => {
       const query = sqlQuery.toLowerCase().trim()
 
-      // Simular diferentes resultados según el tipo de query
       if (query.startsWith('select')) {
         const mockResults: SqlResult = {
           columns: ['id', 'name', 'email', 'created_at'],
@@ -171,7 +97,7 @@ export function SqlExecutorView({ resourceId }: { resourceId: string }) {
     )
   }
 
-  if (!access || !database) {
+  if (!accessRequest) {
     return (
       <div className='min-h-screen bg-background'>
         <div className='container mx-auto px-4 py-8'>
@@ -219,71 +145,25 @@ export function SqlExecutorView({ resourceId }: { resourceId: string }) {
             </div>
             <div className='flex items-center gap-2'>
               <Database className='h-4 w-4 text-muted-foreground' />
-              <span className='text-sm font-medium'>{database.name}</span>
+              <span className='text-sm font-medium'>
+                {accessRequest.resource.name}
+              </span>
             </div>
           </div>
         </div>
       </header>
 
       <main className='container mx-auto px-4 py-8 space-y-6'>
-        {/* API Key Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <Key className='h-5 w-5' />
-              Tu API Key
-            </CardTitle>
-            <CardDescription>
-              Usa esta API Key para autenticar tus consultas a {database.name}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='flex items-center gap-2 p-3 bg-muted rounded-lg'>
-              <code className='flex-1 font-mono text-sm break-all text-green-500'>
-                {access.apiKey}
-              </code>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => copyToClipboard(access.apiKey || '')}
-              >
-                {copied ? (
-                  <Check className='h-4 w-4 text-green-500' />
-                ) : (
-                  <Copy className='h-4 w-4' />
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* SQL Executor */}
         <Card>
           <CardHeader>
             <CardTitle>Ejecutar Consulta</CardTitle>
             <CardDescription>
-              Ingresa tu API Key y la consulta SQL para ejecutar en{' '}
-              {database.name}
+              Escribe tu consulta SQL para ejecutar en{' '}
+              {accessRequest.resource.name}
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-4'>
-            <div className='space-y-2'>
-              <label
-                htmlFor='api-key-input'
-                className='text-sm font-medium flex items-center gap-2'
-              >
-                <Key className='h-4 w-4' />
-                API Key
-              </label>
-              <Input
-                type='password'
-                placeholder='Ingresa tu API key para autenticar'
-                value={apiKeyInput}
-                onChange={e => setApiKeyInput(e.target.value)}
-                className='font-mono'
-              />
-            </div>
-
             <div className='space-y-2'>
               <label
                 htmlFor='sql-query-input'
@@ -293,27 +173,17 @@ export function SqlExecutorView({ resourceId }: { resourceId: string }) {
                 Consulta SQL
               </label>
               <Textarea
-                id='sql-query-input'
                 placeholder='SELECT * FROM users WHERE active = true;'
                 value={sqlQuery}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setSqlQuery(e.target.value)
-                }
+                onChange={e => setSqlQuery(e.target.value)}
                 rows={6}
                 className='font-mono'
               />
             </div>
 
-            {error && (
-              <div className='flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm'>
-                <AlertCircle className='h-4 w-4 mt-0.5 shrink-0' />
-                {error}
-              </div>
-            )}
-
             <Button
               onClick={executeSQL}
-              disabled={!sqlQuery.trim() || isExecuting || !apiKeyInput}
+              disabled={!sqlQuery.trim() || isExecuting}
               className='w-full'
             >
               <Play className='h-4 w-4 mr-2' />
@@ -353,6 +223,7 @@ export function SqlExecutorView({ resourceId }: { resourceId: string }) {
                   <tbody>
                     {sqlResults.rows.map((row, i) => (
                       <tr
+                        // biome-ignore lint/suspicious/noArrayIndexKey: <>
                         key={i}
                         className='hover:bg-muted/50 transition-colors'
                       >

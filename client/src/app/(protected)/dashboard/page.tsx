@@ -152,7 +152,9 @@ export default function Dashboard() {
                             <Button
                               size='sm'
                               onClick={() =>
-                                router.push(`/dashboard/sql/${resource.id}`)
+                                router.push(
+                                  `/dashboard/sql/${resource.requestId}`
+                                )
                               }
                             >
                               <Terminal className='h-4 w-4 mr-2' />
@@ -204,10 +206,6 @@ export default function Dashboard() {
                         <Database className='h-8 w-8 text-primary' />
                         <div>
                           <p className='font-medium'>{selectedResource.name}</p>
-                          <p className='text-sm text-muted-foreground'>
-                            Al ser aprobado, recibirás una API Key para
-                            conectarte
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -316,16 +314,6 @@ export default function Dashboard() {
                             Solicitado:{' '}
                             {new Date(request.requestAt).toLocaleString()}
                           </p>
-                          {request.status === 'APPROVED' && request.id && (
-                            <div className='mt-2 p-2 bg-green-900/20 rounded text-xs'>
-                              <span className='text-muted-foreground'>
-                                API Key:{' '}
-                              </span>
-                              <span className='font-mono text-green-500'>
-                                {request.id}
-                              </span>
-                            </div>
-                          )}
                         </div>
                         {request.status === 'APPROVED' && (
                           <Button

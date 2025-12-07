@@ -60,6 +60,27 @@ export async function getAccessRequests(): Promise<AccessRequest[]> {
   return apiClient.get('/access-requests')
 }
 
+interface AccessRequestByIdResponse {
+  id: string
+  status: AccessRequest['status']
+  reason: string
+  requestedHours: number
+  requestedAt: string
+  reviewedAt: string
+  resource: {
+    id: string
+    name: string
+    type: string
+    status: string
+  }
+}
+
+export async function getAccessRequestById(
+  accessRequestId: string
+): Promise<AccessRequestByIdResponse> {
+  return apiClient.get(`/access-requests/${accessRequestId}`)
+}
+
 export async function getAccessRequestByUserId(
   userId: string
 ): Promise<AccessRequest[]> {

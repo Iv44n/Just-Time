@@ -14,6 +14,7 @@ export interface Resource {
   updatedAt: string
 
   requestStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | null
+  requestId: string | null
 }
 
 export type DatabaseEngine = 'postgresql' | 'mysql' | 'sqlite' | 'sqlserver'
