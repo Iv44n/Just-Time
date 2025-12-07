@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 
 export default function Home() {
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -14,7 +14,7 @@ export default function Home() {
     }
   }, [router, isAuthenticated])
 
-  if (isLoading || isAuthenticated) {
+  if (isAuthenticated) {
     return null
   }
 
