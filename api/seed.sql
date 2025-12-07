@@ -69,8 +69,7 @@ CREATE TABLE IF NOT EXISTS access_requests (
     requested_hours INTEGER NOT NULL CHECK (requested_hours > 0),
     requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     reviewed_at TIMESTAMPTZ,
-    reviewed_by UUID REFERENCES app_users(id) ON DELETE SET NULL,
-    UNIQUE (user_id, resource_id)
+    reviewed_by UUID REFERENCES app_users(id) ON DELETE SET NULL
 );
 
 -- Seed

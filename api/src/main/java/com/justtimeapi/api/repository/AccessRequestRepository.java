@@ -1,6 +1,8 @@
 package com.justtimeapi.api.repository;
 
 import com.justtimeapi.api.dto.request.RequestAccessBody;
+import com.justtimeapi.api.dto.response.AccessRequestResponse;
+import com.justtimeapi.api.dto.response.ResourceSummaryResponse;
 import com.justtimeapi.api.enums.AccessRequestStatus;
 import com.justtimeapi.api.models.AccessRequest;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,23 @@ public class AccessRequestRepository {
                 .reviewedBy(rs.getString("reviewed_by") != null ? UUID.fromString(rs.getString("reviewed_by")) : null)
                 .build();
     };
+
+    private final RowMapper<AccessRequestResponse> accessRequestResponseMapper = (rs, rowNum) ->
+            new AccessRequestResponse(
+                    UUID.fromString(rs.getString("id")),
+                    rs.getString("status"),
+                    rs.getString("reason"),
+                    rs.getInt("requested_hours"),
+                    rs.getTimestamp("requested_at").toLocalDateTime(),
+                    rs.getTimestamp("reviewed_at") != null ? rs.getTimestamp("reviewed_at").toLocalDateTime() : null,
+                    new ResourceSummaryResponse(
+                            UUID.fromString(rs.getString("resource_id")),
+                            rs.getString("resource_name"),
+                            rs.getString("resource_type"),
+                            rs.getString("resource_status")
+                    )
+            );
+
 
     public AccessRequest save(RequestAccessBody accessRequest) {
         String sql = """
@@ -65,6 +84,30 @@ public class AccessRequestRepository {
     public Optional<AccessRequest> findById(UUID id) {
         List<AccessRequest> result = jdbc.query("SELECT * FROM access_requests WHERE id=?", mapper, id);
         return result.isEmpty() ? Optional.empty() : Optional.of(result.getFirst());
+    }
+
+    public Optional<AccessRequestResponse> findByIdToAccessRequestResponse(UUID id) {
+        String sql = """
+                SELECT
+                    ar.id,
+                    ar.resource_id,
+                    ar.reason,
+                    ar.status,
+                    ar.requested_hours,
+                    ar.requested_at,
+                    ar.reviewed_at,
+                
+                    r.name AS resource_name,
+                    rt.code AS resource_type,
+                    r.status AS resource_status
+                
+                FROM access_requests ar
+                JOIN resources r ON r.id = ar.resource_id
+                JOIN resource_types rt ON rt.id = r.type_id
+                WHERE ar.id = ?;
+                """;
+
+        return jdbc.query(sql, accessRequestResponseMapper, id).stream().findFirst();
     }
 
     public void updateStatus(UUID id, AccessRequestStatus status, UUID adminId) {

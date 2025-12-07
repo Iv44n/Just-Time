@@ -22,6 +22,11 @@ import java.util.UUID;
 public class AccessRequestsController {
     private final AccessRequestsService accessRequestsService;
 
+    @GetMapping("{requestId}")
+    public ResponseEntity<?> getRequestById(@PathVariable UUID requestId) {
+        return ResponseEntity.ok(accessRequestsService.getRequestsById(requestId));
+    }
+
     @PostMapping
     public ResponseEntity<?> requestAccess(@Valid @RequestBody RequestAccessBody request){
         AccessRequest accessRequest = accessRequestsService.createRequest(request);

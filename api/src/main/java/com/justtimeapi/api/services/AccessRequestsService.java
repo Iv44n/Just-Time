@@ -1,6 +1,7 @@
 package com.justtimeapi.api.services;
 
 import com.justtimeapi.api.dto.request.RequestAccessBody;
+import com.justtimeapi.api.dto.response.AccessRequestResponse;
 import com.justtimeapi.api.enums.AccessRequestStatus;
 import com.justtimeapi.api.models.AccessRequest;
 import com.justtimeapi.api.repository.AccessRequestRepository;
@@ -22,12 +23,13 @@ public class AccessRequestsService {
         return accessRequestRepository.findAll();
     }
 
-    public List<AccessRequest> getRequestsByUserId(UUID userId) {
-        return accessRequestRepository.findByUserId(userId);
+    public AccessRequestResponse getRequestsById(UUID requestId) {
+        return accessRequestRepository.findByIdToAccessRequestResponse(requestId)
+                .orElseThrow(() -> new RuntimeException("Access with " + requestId + " not found"));
     }
 
-    public void updateStatus(UUID id, AccessRequestStatus status, UUID adminId) {
-        accessRequestRepository.updateStatus(id, status, adminId);
+    public List<AccessRequest> getRequestsByUserId(UUID userId) {
+        return accessRequestRepository.findByUserId(userId);
     }
 
     public Map<String, Object> approve(UUID requestId, UUID adminId){

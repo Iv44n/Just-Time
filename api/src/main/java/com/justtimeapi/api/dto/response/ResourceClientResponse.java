@@ -15,5 +15,6 @@ public record ResourceClientResponse(
         UUID createdBy,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        String requestStatus
+        String requestStatus,
+        String requestId
 ) {}

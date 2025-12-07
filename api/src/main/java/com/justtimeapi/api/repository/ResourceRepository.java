@@ -84,6 +84,7 @@ public class ResourceRepository {
                 .updatedAt(resource.getUpdatedAt())
                 .createdBy(resource.getCreatedBy())
                 .requestStatus(rs.getString("request_status"))
+                .requestId(rs.getString("request_id"))
                 .build();
     };
 
@@ -109,7 +110,8 @@ public class ResourceRepository {
                     rt.id AS type_id,
                     rt.code AS type_code,
                     rt.description AS type_description,
-                    ar.status AS request_status
+                    ar.status AS request_status,
+                    ar.id as request_id
                 FROM resources r
                 JOIN resource_types rt ON r.type_id = rt.id
                 LEFT JOIN access_requests ar
