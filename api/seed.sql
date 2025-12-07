@@ -54,7 +54,7 @@ CREATE TABLE resource_db_details (
     db_name VARCHAR(255) NOT NULL,
     username VARCHAR(100) NOT NULL,
     encrypted_password TEXT NOT NULL,
-    params TEXT, -- resto de la url en formato json o null
+    params TEXT, -- resto de la url en formato string o null
 
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
