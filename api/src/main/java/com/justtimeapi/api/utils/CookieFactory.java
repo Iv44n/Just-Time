@@ -1,6 +1,7 @@
 package com.justtimeapi.api.utils;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,13 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class CookieFactory {
+
+    @Value("${APP_ENV:dev}")
+    private String appEnv;
+
+    private boolean isProd(){
+        return appEnv.equalsIgnoreCase("prod");
+    }
 
     public ResponseCookie accessCookie(String token){
         return createCookie(Constants.ACCESS_TOKEN, token, "/", Duration.ofMinutes(15));
@@ -29,19 +37,19 @@ public class CookieFactory {
     private ResponseCookie clearCookie(String name, String path){
         return ResponseCookie.from(name, "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(isProd())
                 .path(path)
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite(isProd() ? "None" : "Lax")
                 .build();
     }
 
     private ResponseCookie createCookie(String name, String value, String path,Duration maxAge){
         return ResponseCookie.from(name, value)
                 .httpOnly(true)
-                .secure(false)
+                .secure(isProd())
                 .path(path)
-                .sameSite("Lax")
+                .sameSite(isProd() ? "None" : "Lax")
                 .maxAge(maxAge)
                 .build();
     }
