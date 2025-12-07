@@ -52,7 +52,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
 
-        corsConfiguration.setAllowedOrigins(List.of(clientOrigin));
+        String[] origins = clientOrigin
+                .replace(" ", "")    // elimina espacios extra
+                .split(",");
+
+
+        corsConfiguration.setAllowedOrigins(List.of(origins));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);

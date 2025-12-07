@@ -19,11 +19,15 @@ public class JustTimeApiApplication {
 
     @Bean
     public WebMvcConfigurer corsConfigurer(){
+        String[] origins = clientOrigin
+                .replace(" ", "")    // elimina espacios extra
+                .split(",");
+
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(clientOrigin)
+                        .allowedOrigins(origins)
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*")
                         .allowCredentials(true)
