@@ -55,7 +55,6 @@ public class AccessRequestRepository {
         String sql = """
             INSERT INTO access_requests (user_id, resource_id, reason, requested_hours)
             VALUES (?, ?, ?, ?)
-            ON CONFLICT (user_id, resource_id) DO NOTHING
             RETURNING *;
         """;
 
