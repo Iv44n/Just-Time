@@ -1,6 +1,6 @@
 package com.justtimeapi.api.services.token;
 
-import com.justtimeapi.api.interfaces.TokenGeneratorI;
+import com.justtimeapi.api.interfaces.TokenGeneratorStrategy;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Component
-public class AccessTokenGenerator implements TokenGeneratorI {
+public class AccessTokenGenerator implements TokenGeneratorStrategy {
     @Value("${jwt.access.expiration}")
     private Long accessExpiration;
 

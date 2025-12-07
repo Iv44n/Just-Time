@@ -1,7 +1,7 @@
 package com.justtimeapi.api.services.token;
 
 import com.justtimeapi.api.enums.Token;
-import com.justtimeapi.api.interfaces.TokenGeneratorI;
+import com.justtimeapi.api.interfaces.TokenGeneratorStrategy;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -16,18 +16,24 @@ import java.util.UUID;
 public class JwtService {
     @Value("${jwt.secret}")
     private String jwtSecret;
-    private final Map<Token, TokenGeneratorI> tokenGenerators;
+    private final Map<Token, TokenGeneratorStrategy> tokenGeneratorsStrategies;
 
     public JwtService(
             AccessTokenGenerator accessTokenGenerator,
             RefreshTokenGenerator refreshTokenGenerator) {
-        this.tokenGenerators = Map.of(
+        this.tokenGeneratorsStrategies = Map.of(
                 Token.ACCESS_TOKEN, accessTokenGenerator,
                 Token.REFRESH_TOKEN, refreshTokenGenerator);
     }
 
-    public String generateToken(Token token, UUID sessionId, UUID userId) {
-        return tokenGenerators.get(token).generateToken(sessionId, userId, jwtSecret);
+    public String generateToken(Token type, UUID sessionId, UUID userId) {
+        TokenGeneratorStrategy strategy = tokenGeneratorsStrategies.get(type);
+
+        if (strategy == null) {
+            throw new IllegalArgumentException("No strategy registered for token type " + type);
+        }
+
+        return strategy.generateToken(sessionId, userId, jwtSecret);
     }
 
     public Claims extractClaims(String token) {
