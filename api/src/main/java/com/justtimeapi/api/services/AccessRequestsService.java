@@ -3,19 +3,16 @@ package com.justtimeapi.api.services;
 import com.justtimeapi.api.dto.request.RequestAccessBody;
 import com.justtimeapi.api.enums.AccessRequestStatus;
 import com.justtimeapi.api.models.AccessRequest;
-import com.justtimeapi.api.models.ApiKey;
 import com.justtimeapi.api.repository.AccessRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class AccessRequestsService {
     private final AccessRequestRepository accessRequestRepository;
-    private final ApiKeyService apiKeyService;
 
     public AccessRequest createRequest(RequestAccessBody accessRequest){
         return accessRequestRepository.save(accessRequest);
@@ -41,21 +38,6 @@ public class AccessRequestsService {
             throw new IllegalStateException("Request has already been reviewed");
         }
 
-        String keyPrefix = "jt";
-        String rawKey = apiKeyService.generateTempKey(keyPrefix);
-        String keyHash = apiKeyService.hashKey(rawKey);
-        LocalDateTime expiration = apiKeyService.generateExpiration(request.getRequestedHours());
-
-        ApiKey apiKey = apiKeyService.saveApiKey(ApiKey.builder()
-                .userId(request.getUserId())
-                .resourceId(request.getResourceId())
-                .keyHash(keyHash)
-                .keyPrefix(keyPrefix)
-                .expiresAt(expiration)
-                .build()
-        );
-
-        apiKeyService.saveApiKeyInStorageKey(apiKey.getId(), rawKey);
         accessRequestRepository.updateStatus(requestId, AccessRequestStatus.APPROVED, adminId);
 
         Map<String, Object> res = new HashMap<>();

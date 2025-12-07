@@ -73,21 +73,6 @@ CREATE TABLE IF NOT EXISTS access_requests (
     UNIQUE (user_id, resource_id)
 );
 
-CREATE TABLE IF NOT EXISTS api_keys (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
-    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    key_prefix VARCHAR(50) NOT NULL,
-    key_hash TEXT NOT NULL,
-    encrypted_key TEXT NOT NULL,
-
-    expires_at TIMESTAMPTZ NOT NULL,
-    revoked BOOLEAN NOT NULL DEFAULT FALSE,
-    revealed BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (user_id, resource_id)
-);
-
 -- Seed
 INSERT INTO app_roles (id, name) VALUES
     (gen_random_uuid(), 'ROLE_USER'),
