@@ -106,3 +106,24 @@ export async function rejectAccessRequest({
 }): Promise<AccessRequest> {
   return apiClient.put(`/access-requests/${id}/reject?adminId=${adminId}`)
 }
+
+interface SqlResult {
+  columns: string[]
+  rows: Record<string, string | number>[]
+  updateCount: number | null
+}
+
+export async function executeQuery({
+  resourceId,
+  requestId,
+  query
+}: {
+  resourceId: string
+  requestId: string
+  query: string
+}): Promise<SqlResult> {
+  return apiClient.post(`/resources/${resourceId}/query`, {
+    accessRequestId: requestId,
+    sql: query
+  })
+}

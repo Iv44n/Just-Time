@@ -13,12 +13,12 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowLeft, Play, Database, Terminal, CheckCircle } from 'lucide-react'
 import { useAccessRequestById } from '@/hooks/accessRequests'
+import { executeQuery } from '@/lib/api'
 
 interface SqlResult {
   columns: string[]
   rows: Record<string, string | number>[]
-  executionTime: number
-  rowCount: number
+  updateCount: number | null
 }
 
 export function SqlExecutorView({ requestId }: { requestId: string }) {
@@ -28,65 +28,19 @@ export function SqlExecutorView({ requestId }: { requestId: string }) {
   const [sqlResults, setSqlResults] = useState<SqlResult | null>(null)
   const { accessRequest, isLoading } = useAccessRequestById(requestId)
 
-  const executeSQL = () => {
+  const executeSQL = async () => {
     if (!sqlQuery.trim() || !accessRequest) return
 
     setIsExecuting(true)
 
-    setTimeout(() => {
-      const query = sqlQuery.toLowerCase().trim()
+    const res = await executeQuery({
+      resourceId: accessRequest.resource.id,
+      requestId,
+      query: sqlQuery
+    })
 
-      if (query.startsWith('select')) {
-        const mockResults: SqlResult = {
-          columns: ['id', 'name', 'email', 'created_at'],
-          rows: [
-            {
-              id: 1,
-              name: 'John Doe',
-              email: 'john@example.com',
-              created_at: '2024-01-15'
-            },
-            {
-              id: 2,
-              name: 'Jane Smith',
-              email: 'jane@example.com',
-              created_at: '2024-01-16'
-            },
-            {
-              id: 3,
-              name: 'Bob Wilson',
-              email: 'bob@example.com',
-              created_at: '2024-01-17'
-            }
-          ],
-          executionTime: Math.random() * 100 + 10,
-          rowCount: 3
-        }
-        setSqlResults(mockResults)
-      } else if (
-        query.startsWith('insert') ||
-        query.startsWith('update') ||
-        query.startsWith('delete')
-      ) {
-        const mockResults: SqlResult = {
-          columns: ['affected_rows'],
-          rows: [{ affected_rows: Math.floor(Math.random() * 5) + 1 }],
-          executionTime: Math.random() * 50 + 5,
-          rowCount: 1
-        }
-        setSqlResults(mockResults)
-      } else {
-        const mockResults: SqlResult = {
-          columns: ['result'],
-          rows: [{ result: 'Query ejecutada exitosamente' }],
-          executionTime: Math.random() * 30 + 5,
-          rowCount: 1
-        }
-        setSqlResults(mockResults)
-      }
-
-      setIsExecuting(false)
-    }, 1000)
+    setSqlResults(res)
+    setIsExecuting(false)
   }
 
   if (isLoading) {
@@ -201,8 +155,7 @@ export function SqlExecutorView({ requestId }: { requestId: string }) {
                 Resultados
               </CardTitle>
               <CardDescription>
-                {sqlResults.rowCount} fila{sqlResults.rowCount !== 1 ? 's' : ''}{' '}
-                en {sqlResults.executionTime.toFixed(2)}ms
+                {sqlResults.updateCount} fila {sqlResults.updateCount !== 1 ? 's' : ''}
               </CardDescription>
             </CardHeader>
             <CardContent>
