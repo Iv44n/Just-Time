@@ -155,4 +155,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    @ExceptionHandler(ReadOnlyQueryException.class)
+    public ResponseEntity<ApiError> handleReadOnlyQueryException(ReadOnlyQueryException ex) {
+
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                ex.getErrorCode(),
+                Map.of("reason", "Only SELECT statements are allowed")
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
 }

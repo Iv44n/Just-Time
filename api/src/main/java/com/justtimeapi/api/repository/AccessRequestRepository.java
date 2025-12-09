@@ -118,4 +118,14 @@ public class AccessRequestRepository {
 
         jdbc.update(sql, status.toString(), adminId, id);
     }
+
+    public void updateStatusInServer(UUID id, AccessRequestStatus status) {
+        String sql = """
+            UPDATE access_requests
+            SET status=?
+            WHERE id=?
+        """;
+
+        jdbc.update(sql, status.toString(), id);
+    }
 }

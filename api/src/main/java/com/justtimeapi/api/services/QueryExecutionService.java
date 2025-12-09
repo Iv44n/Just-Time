@@ -1,14 +1,22 @@
 package com.justtimeapi.api.services;
 
 import com.justtimeapi.api.dto.response.QueryResultResponse;
+import com.justtimeapi.api.enums.AccessRequestStatus;
 import com.justtimeapi.api.interfaces.QueryExecute;
+import com.justtimeapi.api.models.AccessRequest;
 import com.justtimeapi.api.models.ResourceDbDetails;
+import com.justtimeapi.api.repository.AccessRequestRepository;
 import com.justtimeapi.api.repository.ResourceDbDetailsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Service
@@ -16,10 +24,29 @@ import java.util.*;
 public class QueryExecutionService implements QueryExecute {
     private final DynamicConnectionManager connectionManager;
     private final ResourceDbDetailsRepository resourceDbDetailsRepository;
+    private final AccessRequestRepository accessRequestRepository;
 
+    @Transactional
     @Override
     public QueryResultResponse execute(UUID accessRequestId, UUID resourceId, String sql) {
-        // validar que el access request este en aprovado y no este vencido
+        AccessRequest accessRequest = accessRequestRepository.findById(accessRequestId)
+                .orElseThrow(() -> new RuntimeException("Access request not found"));
+
+        // validar que este aprobado
+        if (!AccessRequestStatus.APPROVED.equals(accessRequest.getStatus())) {
+            throw new RuntimeException("Access request not approved");
+        }
+
+        // validar la expiración
+        LocalDateTime requestedAt = accessRequest.getRequestAt();
+        Instant requestedInstant = requestedAt.atZone(ZoneOffset.UTC).toInstant();
+        Instant expiry = requestedInstant.plus(Duration.ofHours(accessRequest.getRequestedHours()));
+
+        if (Instant.now().isAfter(expiry)) {
+            accessRequestRepository.updateStatusInServer(accessRequest.getId(), AccessRequestStatus.REJECTED);
+            throw new RuntimeException("Access request has expired");
+        }
+
         ResourceDbDetails resourceDbDetails = resourceDbDetailsRepository.findByResourceId(resourceId)
                 .orElseThrow(() -> new RuntimeException("Resource with " + resourceId + " not found"));
 
